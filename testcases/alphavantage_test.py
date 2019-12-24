@@ -73,12 +73,12 @@ class ToolsTestCase(common.TestCase):
 
             for b in bf[instrument]:
                 if b.getDateTime() == datetime.datetime(2019, 12, 17):
-                    self.assertEquals(b.getOpen(), 53.89)
-                    self.assertEquals(b.getHigh(), 54.06)
-                    self.assertEquals(b.getLow(), 52.83)
-                    self.assertEquals(b.getClose(), 52.84)
-                    self.assertEquals(b.getVolume(), 19778245.0)
-                    self.assertEquals(b.getPrice(), 52.84)
+                    self.assertEqual(b.getOpen(), 53.89)
+                    self.assertEqual(b.getHigh(), 54.06)
+                    self.assertEqual(b.getLow(), 52.83)
+                    self.assertEqual(b.getClose(), 52.84)
+                    self.assertEqual(b.getVolume(), 19778245.0)
+                    self.assertEqual(b.getPrice(), 52.84)
             # Not checking against a specific value since this is going to change
             # as time passes by.
             self.assertNotEquals(bf[instrument][-1].getAdjClose(), None)
@@ -96,13 +96,13 @@ class ToolsTestCase(common.TestCase):
             bf.loadAll()
             for b in bf[instrument]:
                 if b.getDateTime() == datetime.datetime(2019, 12, 17):
-                    self.assertEquals(b.getOpen(), 53.89)
-                    self.assertEquals(b.getHigh(), 54.06)
-                    self.assertEquals(b.getLow(), 52.83)
-                    self.assertEquals(b.getClose(), 52.84)
-                    self.assertEquals(b.getVolume(), 19778245.0)
-                    self.assertEquals(b.getPrice(), 52.84)
-                    self.assertEquals(b.getPrice(), b.getAdjClose())
+                    self.assertEqual(b.getOpen(), 53.89)
+                    self.assertEqual(b.getHigh(), 54.06)
+                    self.assertEqual(b.getLow(), 52.83)
+                    self.assertEqual(b.getClose(), 52.84)
+                    self.assertEqual(b.getVolume(), 19778245.0)
+                    self.assertEqual(b.getPrice(), 52.84)
+                    self.assertEqual(b.getPrice(), b.getAdjClose())
 
             # Not checking against a specific value since this is going to change
             # as time passes by.
@@ -120,13 +120,13 @@ class ToolsTestCase(common.TestCase):
 
             for b in bf[instrument]:
                 if b.getDateTime() == datetime.datetime(2019, 12, 17):
-                    self.assertEquals(b.getOpen(), 53.89)
-                    self.assertEquals(b.getHigh(), 54.06)
-                    self.assertEquals(b.getLow(), 52.83)
-                    self.assertEquals(b.getClose(), 52.84)
-                    self.assertEquals(b.getVolume(), 19778245.0)
-                    self.assertEquals(b.getAdjClose(), None)
-                    self.assertEquals(b.getPrice(), 52.84)
+                    self.assertEqual(b.getOpen(), 53.89)
+                    self.assertEqual(b.getHigh(), 54.06)
+                    self.assertEqual(b.getLow(), 52.83)
+                    self.assertEqual(b.getClose(), 52.84)
+                    self.assertEqual(b.getVolume(), 19778245.0)
+                    self.assertEqual(b.getAdjClose(), None)
+                    self.assertEqual(b.getPrice(), 52.84)
 
     def testDownloadAndParseWeekly(self):
         with common.TmpDir() as tmpPath:
@@ -144,60 +144,97 @@ class ToolsTestCase(common.TestCase):
                 bf[instrument][0].getDateTime() in [datetime.datetime(2010, 1, 8), datetime.datetime(2010, 1, 15)]
             )
 
-            for b in bf[instrument]:
-                if b.getDateTime() == datetime.datetime(2019, 12, 17):
-                    pass
-
-            self.assertEquals(bf[instrument][-1].getDateTime(), datetime.datetime(2010, 12, 31))
-            self.assertEquals(bf[instrument][-1].getOpen(), 322.8519)
-            self.assertEquals(bf[instrument][-1].getHigh(), 326.66)
-            self.assertEquals(bf[instrument][-1].getLow(), 321.31)
-            self.assertEquals(bf[instrument][-1].getClose(), 322.56)
-            self.assertEquals(bf[instrument][-1].getVolume(), 33567200.0)
-            self.assertEquals(bf[instrument][-1].getPrice(), 322.56)
+            self.assertEqual(bf[instrument][-1].getDateTime(), datetime.datetime(2010, 12, 31))
+            self.assertEqual(bf[instrument][-1].getOpen(), 322.8519)
+            self.assertEqual(bf[instrument][-1].getHigh(), 326.66)
+            self.assertEqual(bf[instrument][-1].getLow(), 321.31)
+            self.assertEqual(bf[instrument][-1].getClose(), 322.56)
+            self.assertEqual(bf[instrument][-1].getVolume(), 33567200.0)
+            self.assertEqual(bf[instrument][-1].getPrice(), 322.56)
             # Not checking against a specific value since this is going to change
             # as time passes by.
             self.assertNotEquals(bf[instrument][-1].getAdjClose(), None)
+
+    def testDownloadAndParseHourly(self):
+        with common.TmpDir() as tmpPath:
+            instrument = "AAPL"
+            path = os.path.join(tmpPath, "alpha-vantage-aapl-hourly.csv")
+            alphavantage.download_intradays_bars(instrument, path, bar.Frequency.HOUR, apiKey=ALPHA_VANTAGE_API_KEY)
+            bf = alphavantagefeed.Feed(frequency=bar.Frequency.HOUR)
+            bf.addBarsFromCSV(instrument, path)
+            bf.loadAll()
+
+            self.assertIsNotNone(bf[instrument][-1].getDateTime())
+            self.assertIsNotNone(bf[instrument][-1].getOpen())
+            self.assertIsNotNone(bf[instrument][-1].getHigh())
+            self.assertIsNotNone(bf[instrument][-1].getLow())
+            self.assertIsNotNone(bf[instrument][-1].getClose())
+            self.assertIsNotNone(bf[instrument][-1].getVolume())
+            self.assertIsNotNone(bf[instrument][-1].getPrice())
+            # Not adjusted price in intraday bars
+            self.assertIsNone(bf[instrument][-1].getAdjClose())
+
+    def testDownloadAndParseMinutes(self):
+        with common.TmpDir() as tmpPath:
+            instrument = "AAPL"
+            path = os.path.join(tmpPath, "alpha-vantage-aapl-minute.csv")
+            alphavantage.download_intradays_bars(instrument, path, bar.Frequency.MINUTE, apiKey=ALPHA_VANTAGE_API_KEY)
+            bf = alphavantagefeed.Feed(frequency=bar.Frequency.MINUTE)
+            bf.addBarsFromCSV(instrument, path)
+            bf.loadAll()
+
+            self.assertIsNotNone(bf[instrument][-1].getDateTime())
+            self.assertIsNotNone(bf[instrument][-1].getOpen())
+            self.assertIsNotNone(bf[instrument][-1].getHigh())
+            self.assertIsNotNone(bf[instrument][-1].getLow())
+            self.assertIsNotNone(bf[instrument][-1].getClose())
+            self.assertIsNotNone(bf[instrument][-1].getVolume())
+            self.assertIsNotNone(bf[instrument][-1].getPrice())
+            # Not adjusted price in intraday bars
+            self.assertIsNone(bf[instrument][-1].getAdjClose())
 
     def testInvalidFrequency(self):
         with self.assertRaisesRegexp(Exception, "Invalid frequency.*"):
-            alphavantagefeed.Feed(frequency=bar.Frequency.MINUTE)
-"""
+            alphavantagefeed.Feed(frequency=bar.Frequency.SECOND)
+
     def testBuildFeedDaily(self):
         with common.TmpDir() as tmpPath:
             instrument = "ORCL"
-            bf = quandl.build_feed("WIKI", [instrument], 2010, 2010, tmpPath, authToken=QUANDL_API_KEY)
+            bf = alphavantage.build_feed([instrument], tmpPath, datetime.datetime(2010, 1, 1),
+                                         datetime.datetime(2010, 12, 31), apiKey=ALPHA_VANTAGE_API_KEY)
             bf.loadAll()
-            self.assertEquals(bf[instrument][-1].getDateTime(), datetime.datetime(2010, 12, 31))
-            self.assertEquals(bf[instrument][-1].getOpen(), 31.22)
-            self.assertEquals(bf[instrument][-1].getHigh(), 31.33)
-            self.assertEquals(bf[instrument][-1].getLow(), 30.93)
-            self.assertEquals(bf[instrument][-1].getClose(), 31.3)
-            self.assertEquals(bf[instrument][-1].getVolume(), 11716300)
-            self.assertEquals(bf[instrument][-1].getPrice(), 31.3)
+
+            self.assertEqual(bf[instrument][-1].getDateTime(), datetime.datetime(2010, 12, 31))
+            self.assertEqual(bf[instrument][-1].getOpen(), 31.22)
+            self.assertEqual(bf[instrument][-1].getHigh(), 31.33)
+            self.assertEqual(bf[instrument][-1].getLow(), 30.93)
+            self.assertEqual(bf[instrument][-1].getClose(), 31.3)
+            self.assertEqual(bf[instrument][-1].getVolume(), 11716300)
+            self.assertEqual(bf[instrument][-1].getPrice(), 31.3)
             # Not checking against a specific value since this is going to change
             # as time passes by.
-            self.assertNotEquals(bf[instrument][-1].getAdjClose(), None)
+            self.assertNotEqual(bf[instrument][-1].getAdjClose(), None)
 
     def testBuildFeedWeekly(self):
         with common.TmpDir() as tmpPath:
             instrument = "AAPL"
-            bf = quandl.build_feed(
-                "WIKI", [instrument], 2010, 2010, tmpPath, bar.Frequency.WEEK,
-                authToken=QUANDL_API_KEY
+            bf = alphavantage.build_feed(
+                [instrument], tmpPath, datetime.datetime(2010, 1, 1),
+                datetime.datetime(2010, 12, 31), bar.Frequency.WEEK,
+                apiKey=ALPHA_VANTAGE_API_KEY
             )
             bf.loadAll()
-            # Quandl used to report 2010-1-3 as the first week of 2010.
+            # Alpha Vantage used to report 2010-1-8 as the first week of 2010.
             self.assertTrue(
-                bf[instrument][0].getDateTime() in [datetime.datetime(2010, 1, 3), datetime.datetime(2010, 1, 10)]
+                bf[instrument][0].getDateTime() in [datetime.datetime(2010, 1, 8), datetime.datetime(2010, 1, 15)]
             )
-            self.assertEquals(bf[instrument][-1].getDateTime(), datetime.datetime(2010, 12, 26))
-            self.assertEquals(bf[instrument][-1].getOpen(), 325.0)
-            self.assertEquals(bf[instrument][-1].getHigh(), 325.15)
-            self.assertEquals(bf[instrument][-1].getLow(), 323.17)
-            self.assertEquals(bf[instrument][-1].getClose(), 323.6)
-            self.assertEquals(bf[instrument][-1].getVolume(), 7969900)
-            self.assertEquals(bf[instrument][-1].getPrice(), 323.6)
+            self.assertEqual(bf[instrument][-1].getDateTime(), datetime.datetime(2010, 12, 31))
+            self.assertEqual(bf[instrument][-1].getOpen(), 322.8519)
+            self.assertEqual(bf[instrument][-1].getHigh(), 326.66)
+            self.assertEqual(bf[instrument][-1].getLow(), 321.31)
+            self.assertEqual(bf[instrument][-1].getClose(), 322.56)
+            self.assertEqual(bf[instrument][-1].getVolume(), 33567200.0)
+            self.assertEqual(bf[instrument][-1].getPrice(), 322.56)
             # Not checking against a specific value since this is going to change
             # as time passes by.
             self.assertNotEquals(bf[instrument][-1].getAdjClose(), None)
@@ -206,95 +243,37 @@ class ToolsTestCase(common.TestCase):
         instrument = "inexistent"
 
         # Don't skip errors.
-        with self.assertRaisesRegexp(Exception, "404 Client Error: Not Found"):
+        with self.assertRaisesRegexp(Exception, "Invalid content-type: application/json"):
             with common.TmpDir() as tmpPath:
-                quandl.build_feed(
-                    instrument, [instrument], 2010, 2010, tmpPath, bar.Frequency.WEEK,
-                    authToken=QUANDL_API_KEY
+                alphavantage.build_feed([instrument], tmpPath, frequency=bar.Frequency.WEEK,
+                    apiKey=ALPHA_VANTAGE_API_KEY
                 )
 
         # Skip errors.
         with common.TmpDir() as tmpPath:
-            bf = quandl.build_feed(
-                instrument, [instrument], 2010, 2010, tmpPath, bar.Frequency.WEEK, skipErrors=True,
-                authToken=QUANDL_API_KEY
+            bf = alphavantage.build_feed(
+                [instrument], tmpPath, frequency=bar.Frequency.WEEK, skipErrors=True,
+                apiKey=ALPHA_VANTAGE_API_KEY
             )
             bf.loadAll()
             self.assertNotIn(instrument, bf)
-
-    def testMapColumnNames(self):
-        column_names = {
-            "open": "Price",
-            "close": "Price",
-        }
-        with common.TmpDir() as tmpPath:
-            instrument = "IWG"
-            year = 2017
-            bf = quandl.build_feed(
-                "LSE", [instrument], year, year, tmpPath, columnNames=column_names, skipMalformedBars=True,
-                authToken=QUANDL_API_KEY
-            )
-            bf.setNoAdjClose()
-            bf.loadAll()
-            self.assertEquals(bf[instrument][0].getDateTime(), datetime.datetime(year, 1, 3))
-            self.assertEquals(bf[instrument][0].getOpen(), 237.80)
-            self.assertEquals(bf[instrument][0].getHigh(), 247.00)
-            self.assertEquals(bf[instrument][0].getLow(), 236.30)
-            self.assertEquals(bf[instrument][0].getClose(), 237.80)
-            self.assertEquals(bf[instrument][0].getVolume(), 3494173)
-            self.assertEquals(bf[instrument][0].getAdjClose(), None)
-            self.assertEquals(bf[instrument][0].getPrice(), 237.80)
-
-    def testExtraColumns(self):
-        with common.TmpDir() as tmpPath:
-            columnNames = {
-                "open": "Last",
-                "close": "Last"
-            }
-            bf = quandl.build_feed(
-                "BITSTAMP", ["USD"], 2014, 2014, tmpPath, columnNames=columnNames,
-                authToken=QUANDL_API_KEY
-            )
-            bf.loadAll()
-
-            self.assertEquals(len(bf["USD"][-1].getExtraColumns()), 3)
-            self.assertEquals(bf["USD"][-1].getExtraColumns()["Bid"], 319.19)
-            self.assertEquals(bf["USD"][-1].getExtraColumns()["Ask"], 319.63)
-
-            bids = bf["USD"].getExtraDataSeries("Bid")
-            self.assertEquals(bids[-1], 319.19)
-
-    def testNoAdjClose(self):
-        with common.TmpDir() as tmpPath:
-            columnNames = {
-                "open": "Last",
-                "close": "Last",
-                "adj_close": None
-            }
-            bf = quandl.build_feed(
-                "BITSTAMP", ["USD"], 2014, 2014, tmpPath, columnNames=columnNames,
-                authToken=QUANDL_API_KEY
-            )
-            bf.loadAll()
-
-            self.assertFalse(bf.barsHaveAdjClose())
-            self.assertEquals(bf["USD"][-1].getAdjClose(), None)
 
     def testBuildFeedDailyCreatingDir(self):
         tmpPath = tempfile.mkdtemp()
         shutil.rmtree(tmpPath)
         try:
             instrument = "ORCL"
-            bf = quandl.build_feed("WIKI", [instrument], 2010, 2010, tmpPath, authToken=QUANDL_API_KEY)
+            bf = alphavantage.build_feed([instrument], tmpPath, datetime.datetime(2010,1,1),
+                                         datetime.datetime(2010, 12, 31), apiKey=ALPHA_VANTAGE_API_KEY)
             bf.loadAll()
 
-            self.assertEquals(bf[instrument][-1].getDateTime(), datetime.datetime(2010, 12, 31))
-            self.assertEquals(bf[instrument][-1].getOpen(), 31.22)
-            self.assertEquals(bf[instrument][-1].getHigh(), 31.33)
-            self.assertEquals(bf[instrument][-1].getLow(), 30.93)
-            self.assertEquals(bf[instrument][-1].getClose(), 31.3)
-            self.assertEquals(bf[instrument][-1].getVolume(), 11716300)
-            self.assertEquals(bf[instrument][-1].getPrice(), 31.3)
+            self.assertEqual(bf[instrument][-1].getDateTime(), datetime.datetime(2010, 12, 31))
+            self.assertEqual(bf[instrument][-1].getOpen(), 31.22)
+            self.assertEqual(bf[instrument][-1].getHigh(), 31.33)
+            self.assertEqual(bf[instrument][-1].getLow(), 30.93)
+            self.assertEqual(bf[instrument][-1].getClose(), 31.3)
+            self.assertEqual(bf[instrument][-1].getVolume(), 11716300)
+            self.assertEqual(bf[instrument][-1].getPrice(), 31.3)
             # Not checking against a specific value since this is going to change
             # as time passes by.
             self.assertNotEquals(bf[instrument][-1].getAdjClose(), None)
@@ -307,24 +286,24 @@ class ToolsTestCase(common.TestCase):
         try:
             instrument = "ORCL"
             subprocess.call([
-                "python", "-m", "pyalgotrade.tools.quandl",
-                "--source-code=WIKI",
-                "--table-code=%s" % instrument,
-                "--from-year=2010",
-                "--to-year=2010",
+                "python", "-m", "pyalgotrade.tools.alphavantage",
+                "--symbol=%s" % instrument,
                 "--storage=%s" % tmpPath,
-                "--auth-token=%s" % QUANDL_API_KEY
+                "--api-key=%s" % ALPHA_VANTAGE_API_KEY
             ])
-            bf = quandlfeed.Feed()
-            bf.addBarsFromCSV(instrument, os.path.join(tmpPath, "WIKI-ORCL-2010-quandl.csv"))
+            bf = alphavantagefeed.Feed()
+            bf.setBarFilter(csvfeed.DateRangeFilter(fromDate=datetime.datetime(2010, 1, 1),
+                                                    toDate=datetime.datetime(2010, 12, 31)))
+            bf.addBarsFromCSV(instrument, os.path.join(tmpPath, "ORCL-alpha-vantage.csv"))
             bf.loadAll()
-            self.assertEquals(bf[instrument][-1].getDateTime(), datetime.datetime(2010, 12, 31))
-            self.assertEquals(bf[instrument][-1].getOpen(), 31.22)
-            self.assertEquals(bf[instrument][-1].getHigh(), 31.33)
-            self.assertEquals(bf[instrument][-1].getLow(), 30.93)
-            self.assertEquals(bf[instrument][-1].getClose(), 31.3)
-            self.assertEquals(bf[instrument][-1].getVolume(), 11716300)
-            self.assertEquals(bf[instrument][-1].getPrice(), 31.3)
+
+            self.assertEqual(bf[instrument][-1].getDateTime(), datetime.datetime(2010, 12, 31))
+            self.assertEqual(bf[instrument][-1].getOpen(), 31.22)
+            self.assertEqual(bf[instrument][-1].getHigh(), 31.33)
+            self.assertEqual(bf[instrument][-1].getLow(), 30.93)
+            self.assertEqual(bf[instrument][-1].getClose(), 31.3)
+            self.assertEqual(bf[instrument][-1].getVolume(), 11716300)
+            self.assertEqual(bf[instrument][-1].getPrice(), 31.3)
         finally:
             shutil.rmtree(tmpPath)
 
@@ -334,26 +313,25 @@ class ToolsTestCase(common.TestCase):
         try:
             instrument = "AAPL"
             subprocess.call([
-                "python", "-m", "pyalgotrade.tools.quandl",
-                "--source-code=WIKI",
-                "--table-code=%s" % instrument,
-                "--from-year=2010",
-                "--to-year=2010",
+                "python", "-m", "pyalgotrade.tools.alphavantage",
+                "--symbol=%s" % instrument,
                 "--storage=%s" % tmpPath,
                 "--frequency=weekly",
-                "--auth-token=%s" % QUANDL_API_KEY
+                "--api-key=%s" % ALPHA_VANTAGE_API_KEY
             ])
-            bf = quandlfeed.Feed()
-            bf.addBarsFromCSV(instrument, os.path.join(tmpPath, "WIKI-AAPL-2010-quandl.csv"))
+            bf = alphavantagefeed.Feed()
+            bf.setBarFilter(csvfeed.DateRangeFilter(fromDate=datetime.datetime(2010, 1, 1),
+                                                    toDate=datetime.datetime(2010, 12, 31)))
+            bf.addBarsFromCSV(instrument, os.path.join(tmpPath, "AAPL-alpha-vantage.csv"))
             bf.loadAll()
 
-            self.assertEquals(bf[instrument][-1].getDateTime(), datetime.datetime(2010, 12, 26))
-            self.assertEquals(bf[instrument][-1].getOpen(), 325.0)
-            self.assertEquals(bf[instrument][-1].getHigh(), 325.15)
-            self.assertEquals(bf[instrument][-1].getLow(), 323.17)
-            self.assertEquals(bf[instrument][-1].getClose(), 323.6)
-            self.assertEquals(bf[instrument][-1].getVolume(), 7969900)
-            self.assertEquals(bf[instrument][-1].getPrice(), 323.6)
+            self.assertEqual(bf[instrument][-1].getDateTime(), datetime.datetime(2010, 12, 31))
+            self.assertEqual(bf[instrument][-1].getOpen(), 322.8519)
+            self.assertEqual(bf[instrument][-1].getHigh(), 326.66)
+            self.assertEqual(bf[instrument][-1].getLow(), 321.31)
+            self.assertEqual(bf[instrument][-1].getClose(), 322.56)
+            self.assertEqual(bf[instrument][-1].getVolume(), 33567200.0)
+            self.assertEqual(bf[instrument][-1].getPrice(), 322.56)
         finally:
             shutil.rmtree(tmpPath)
 
@@ -362,18 +340,15 @@ class ToolsTestCase(common.TestCase):
             instrument = "inexistent"
             output = check_output(
                 [
-                    "python", "-m", "pyalgotrade.tools.quandl",
-                    "--source-code=WIKI",
-                    "--table-code=%s" % instrument,
-                    "--from-year=2010",
-                    "--to-year=2010",
+                    "python", "-m", "pyalgotrade.tools.alphavantage",
+                    "--symbol=%s" % instrument,
                     "--storage=%s" % tmpPath,
                     "--frequency=daily",
                     "--ignore-errors"
                 ],
                 stderr=subprocess.STDOUT
             )
-            self.assertIn("quandl [ERROR] 404 Client Error: Not Found", output)
+            self.assertIn("Invalid content-type: application/json", output)
 
     def testDontIgnoreErrors(self):
         with self.assertRaises(Exception) as e:
@@ -381,15 +356,12 @@ class ToolsTestCase(common.TestCase):
                 instrument = "inexistent"
                 check_output(
                     [
-                        "python", "-m", "pyalgotrade.tools.quandl",
-                        "--source-code=WIKI",
-                        "--table-code=%s" % instrument,
-                        "--from-year=2010",
-                        "--to-year=2010",
+                        "python", "-m", "pyalgotrade.tools.alphavantage",
+                        "--symbol=%s" % instrument,
                         "--storage=%s" % tmpPath,
                         "--frequency=daily"
                     ],
                     stderr=subprocess.STDOUT
                 )
-        self.assertIn("404 Client Error: Not Found", bytes_to_str(e.exception.output))
-"""
+        self.assertIn("Invalid content-type: application/json", bytes_to_str(e.exception.output))
+
